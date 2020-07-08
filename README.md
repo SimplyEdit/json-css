@@ -24,7 +24,7 @@ To use JSON-CSS on a set of data, you need to initialize it first:
     var searcher = jsonCSS.init(data);
 ```
 
-Then you can call the method `query` on the data:
+Then you can call the method `query` on the data, using CSS selectors:
 
 ```
     var results = searcher.query('title[value~="Stand"]');
@@ -47,7 +47,8 @@ This returns the results as an array of name / value objects, like this:
 ]
 ```
 
-If you just want the values, without the key and domNode, call `values()` on the result:
+If you just want the values, without the key and domNode, call `values()`
+on the result:
 
 ```
     var values = searcher.query('title[value~="Stand"]').values();
@@ -86,23 +87,78 @@ Which returns:
     }
 ```
 
+## Combining selectors
+
+You can use more than one selector in the query() function. The first
+selector defines which entries are returned. The rest filter the returned
+results. e.g.
+
+```
+	var values = searcher.query('search > *','title[value~="Stand"]').values();
+```
+
+This returns:
+
+```
+[
+    {
+      "isbn": "0765326787",
+      "title": "Stand on Zanzibar",
+      "author": "John Brunner"
+    },
+    {
+      "isbn": "0767856120",
+      "title": "Stand By Me (Special Edition)",
+      "author": ""
+    }
+]
+```
+
+In this case the first selector simply matches any top level entry. Here it
+matches all the books in the books.json array.
+
+If you want to search for entries that match one or more selector, simply
+combine the selectors with a comma, like you would in CSS itself:
+
+```
+	var values = searcher.query('search > *','title[value~="Stand"],title[value~="Sit"').values();
+```
+
+This example will search for books with a title that either has the word
+'Stand' or the word 'Sit' in it.
+
+## Which selectors can I use?
+
+You can use any selector that the browser supports. But the most useful
+selectors are the attribute selectors. See [MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors)
+for more information.
 
 ## When should I use this?
 
-If you have a relatively large dataset and want a fast and simple way to filter or select elements from it in javascript.
+If you have a relatively large dataset and want a fast and simple way to 
+filter or select elements from it in javascript.
 
-jsonCSS allows you to use your knowledge of CSS selectors to select elements from your JSON data set. Because CSS selector engines have been extremely optimized in browsers, this is also one of the fastest way to search through data in your browser. 
+jsonCSS allows you to use your knowledge of CSS selectors to select 
+elements from your JSON data set. Because CSS selector engines have been 
+extremely optimized in browsers, this is also one of the fastest way to 
+search through data in your browser. 
 
-The downsides are that CSS selectors are limited in scope and there is an initial performance hit to transform the JSON data to HTML5 elements. 
+The downsides are that CSS selectors are limited in scope and there is an 
+initial performance hit to transform the JSON data to HTML5 elements. 
 
-A set of about 10,000 elements can take up to 1 second in Internet Explorer or Edge to render, Firefox and Chrome manage to this in about 350 ms. However searches are down to single or double digits in ms.
+A set of about 10,000 elements can take up to 1 second in Internet Explorer 
+or Edge to render, Firefox and Chrome manage to this in about 350 ms. 
+However searches are down to single or double digits in ms.
 
 ## How does it work?
 
-The jsonCSS.init method parses the data and creates a DOM tree of the data as HTML5 elements. Then it adds a search method to your data, that runs the CSS selectors on that DOM tree. The results are mapped back to your data structure.
+The jsonCSS.init method parses the data and creates a DOM tree of the data 
+as HTML5 elements. Then it adds a search method to your data, that runs the 
+CSS selectors on that DOM tree. The results are mapped back to your data 
+structure.
 
-Note: this means that if you change your data, you must call jsonCSS.init() on it again, so the DOM tree is updated.
-
+Note: this means that if you change your data, you must call jsonCSS.init() 
+on it again, so the DOM tree is updated.
 
 ## Examples
 
@@ -120,7 +176,9 @@ These examples assume you use the books.json dataset.
     var results = searcher.query('books > *','title[value~="Stand"');
 ```
 
-This works because the first CSS selector tells jsonCSS which elements to return in the result set. The second, third, etc. selector work as filters on the initial set.
+This works because the first CSS selector tells jsonCSS which elements to 
+return in the result set. The second, third, etc. selector work as filters on 
+the initial set.
 
 You could also write this with CSS4 selectors as:
 
@@ -128,8 +186,9 @@ You could also write this with CSS4 selectors as:
     var results = searcher.query('books > *:has(title[value~="Stand"])');
 ```
 
-Unfortunately, no browsers support the `:has` selector yet. The good news is, when browser finally implement this, you can immediately start using it. There is no need to update the
-jsonCSS library.
+Unfortunately, no browsers support the `:has` selector yet. The good news is, 
+when browser finally implement this, you can immediately start using it. 
+There is no need to update the jsonCSS library.
 
 ### Get all books that contain the string 'Stand' in their title
 
@@ -137,31 +196,45 @@ jsonCSS library.
     var results = searcher.query('books > *','title[value*="Stand"]');
 ```
 
+And also case insensitive:
+
+```
+    var results = searcher.query('books > *','title[value*="Stand" i]');
+```
+
 ### Get at most 2 books that contain the string 'Stand' in their title
 
 ```
-    var results = searcher.query('books > *','title[value*="Stand"]').slice(0,2);
+    var results = searcher
+        .query('books > *','title[value*="Stand"]')
+        .slice(0,2);
 ```
 
-The result set is a normal javascript array, so you can use the normal methods, like slice, on it.
+The result set is a normal javascript array, so you can use the normal 
+methods, like slice, on it.
 
-### Get all books that contain the string 'Stand' in their title and are written by John Brunner
+### Get all books that contain the string 'Stand' in their title and are 
+written by John Brunner
 
 ```
-    var results = searcher.query('books > *',
-    'title[value*="Stand"]', 'author[value="John Brunner"]');
+    var results = searcher
+        .query('books > *', 'title[value*="Stand"]', 'author[value="John Brunner"]');
 ```
 
-Each additional selector is an additional filter on the result set, so it is effectively an 'and' operation.
+Each additional selector is an additional filter on the result set, so 
+it is effectively an 'and' operation.
 
-### Get all books that contain the string 'Stand' in their title or are written by John Brunner
+### Get all books that contain the string 'Stand' in their title 
+or are written by John Brunner
 
 ```
     var results = searcher.query('books > *',
     'title[value*="Stand"], author[value="John Brunner"]');
 ```
 
-It's a subtle difference with the previous query, but by combining two selectors into a single string, you tell the browser that either selector may match independently, so effectively it's an 'or' operation.
+It's a subtle difference with the previous query, but by combining two 
+selectors into a single string, you tell the browser that either selector
+may match independently, so effectively it's an 'or' operation.
 
 ### Get all books that contain the string 'Stand', ordered by title
 
@@ -174,7 +247,9 @@ It's a subtle difference with the previous query, but by combining two selectors
 
 ## Special characters in property names
 
-If your JSON data contains properties with spaces, quotes or other characters that aren't valid in a HTML5 tag name, you must write the CSS selector slightly differently:
+If your JSON data contains properties with spaces, quotes or other 
+characters that aren't valid in a HTML5 tag name, you must write the CSS 
+selector slightly differently:
 
 With a property name "first name", instead of this:
 
@@ -188,11 +263,13 @@ Use this:
     var results = searcher.query('persons > *', '[name="first name"][value~="John"]');
 ```
 
-For quotes, greater-than and smaller-than, use their HTML entity counterparts: &quot;, &gt; and &lt;.
+For quotes, greater-than and smaller-than, use their HTML entity 
+counterparts: &quot;, &gt; and &lt;.
 
 ## Updating data
 
-When the data changes, the search cache must also be updated. You can do this by calling:
+When the data changes, the search cache must also be updated. You can do 
+this by calling:
 
 ```
     searcher.update();
@@ -200,17 +277,27 @@ When the data changes, the search cache must also be updated. You can do this by
 
 ## Debugging
 
-Sometimes it isn't very clear what the selector should look like from just the JSON data. In that case it might help to see what the DOM tree looks like, that jsonCSS generates from your data.
+Sometimes it isn't very clear what the selector should look like from just 
+the JSON data. In that case it might help to see what the DOM tree looks 
+like, that jsonCSS generates from your data.
 
 ```
     console.log(searcher.dom);
 ```
 
-This will show you the entire DOM tree for your data in your browsers console. You can click through it in most browsers.
+This will show you the entire DOM tree for your data in your browsers 
+console. You can click through it in most browsers.
 
 # Why did we make this?
 
-There are many options to make JSON data searchable, like defiant.js, json-query or even pouchDB. But they all require you to learn a complex new syntax and some require quite a lot of code to be included and maintained as well.
+There are many options to make JSON data searchable, like defiant.js, 
+json-query or even pouchDB. But they all require you to learn a complex 
+new syntax and some require quite a lot of code to be included and 
+maintained as well.
 
-We just wanted something a bit easier than writing our own tree walking and filtering code in javascript. We actually tried defiant.js first, but after a few aborted tries decided that xpath is not meant for normal humans. Since we already knew CSS, why not use that for the heavy lifting?
+We just wanted something a bit easier than writing our own tree walking 
+and filtering code in javascript. We actually tried
+[defiant.js](https://www.defiantjs.com/) first, 
+but after a few aborted tries decided that xpath is not meant for normal 
+humans. Since we already knew CSS, why not use that for the heavy lifting?
 
